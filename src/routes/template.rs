@@ -26,7 +26,9 @@ lazy_static! {
     };
 }
 
+#[derive(Debug)]
 struct UnixTimestamp(u64);
+#[derive(Debug)]
 struct DiscordFlags(Vec<String>);
 
 #[derive(Serialize)]
@@ -49,7 +51,7 @@ struct UserCardJsonExtra {
     img_url: Option<String>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct UserCardRequest {
     username: String,
     tag: Option<String>,
@@ -61,6 +63,26 @@ pub struct UserCardRequest {
     flags: Option<DiscordFlags>,
     status: Option<String>,
     img_url: Option<String>,
+}
+
+impl Serialize for UnixTimestamp {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.0.to_string())
+    }
+}
+
+impl Serialize for DiscordFlags {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        // join with comma
+        let joined = self.0.join(",");
+        serializer.serialize_str(&joined)
+    }
 }
 
 // impl trait Deseralize for UnixTimestamp

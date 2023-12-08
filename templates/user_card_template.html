@@ -567,13 +567,17 @@
             <span><span style="font-weight: 700;">Bergabung</span>: {{ joined_at }}</span>
         </div>
     </div>
-    <div id="ready-notifier" style="display: none;">not ready</div>
+    <!-- <div id="ready-notifier" style="display: none;">not ready</div> -->
     <script id="__TEMPLATE_DATA__" type="application/json">{{ json_extra }}</script>
     <script type="text/javascript">
         "use strict";
 
         function notifyReady() {
-            document.getElementById("ready-notifier").textContent = "ready";
+            const doc = document.createElement("div");
+            doc.id = "ready-notifier";
+            doc.textContent = "ready";
+            doc.style.display = "none";
+            document.body.appendChild(doc);
         }
 
         document.getElementById("img-base").onload = () => {
