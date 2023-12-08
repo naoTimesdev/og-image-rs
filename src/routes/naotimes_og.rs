@@ -1,3 +1,4 @@
+/// OG Image Generator for naoTimes
 use axum::{
     extract::Query,
     http::{header, HeaderMap, StatusCode},
@@ -197,7 +198,7 @@ pub async fn handle_og_image_request(og_request: Query<OGImageRequest>) -> impl 
         Ok((data, uuid)) => {
             if data.is_empty() {
                 headers.insert(header::CONTENT_TYPE, "text/plain".parse().unwrap());
-                (StatusCode::OK, headers, errors_text)
+                (StatusCode::INTERNAL_SERVER_ERROR, headers, errors_text)
             } else {
                 headers.insert(header::CONTENT_TYPE, "image/png".parse().unwrap());
                 headers.insert(
@@ -212,7 +213,7 @@ pub async fn handle_og_image_request(og_request: Query<OGImageRequest>) -> impl 
         Err(err) => {
             tracing::error!("Error creating OG Image: {}", err);
             headers.insert(header::CONTENT_TYPE, "text/plain".parse().unwrap());
-            (StatusCode::OK, headers, errors_text)
+            (StatusCode::INTERNAL_SERVER_ERROR, headers, errors_text)
         }
     }
 }

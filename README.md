@@ -17,3 +17,6 @@ The following package is developed with Rust 1.72 with support for minimum versi
    - `./target/release/naotimes_open_graph`
    - `& ./target/release/naotimes_open_graph.exe`
 5. Open http://127.0.0.1:12460 and start using it.
+
+## Config
+See [.env.example](.env.example)
