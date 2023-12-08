@@ -109,6 +109,18 @@ pub async fn handle_generator_user_card(request: Query<UserCardRequest>) -> impl
                 (StatusCode::INTERNAL_SERVER_ERROR, headers, errors_text)
             } else {
                 headers.insert(header::CONTENT_TYPE, "image/png".parse().unwrap());
+                let uuid = uuid::Uuid::new_v4().to_string();
+                headers.insert(
+                    header::CONTENT_DISPOSITION,
+                    format!("inline; filename=\"{}.UserCard.png\"", uuid)
+                        .parse()
+                        .unwrap(),
+                );
+                // Add cache-control for 10 minutes
+                headers.insert(
+                    header::CACHE_CONTROL,
+                    "public, max-age=600".parse().unwrap(),
+                );
                 (StatusCode::OK, headers, data)
             }
         }

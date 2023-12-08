@@ -130,18 +130,7 @@ fn create_ytm_thumb_square(bytes_data: Vec<u8>) -> ImageBuffer<image::Rgba<u8>, 
     let mut image = image::load_from_memory(&bytes_data).unwrap();
     // Crop the image to 720x720, with gravity center
     let cropped_image = image::imageops::crop(&mut image, 280, 0, 720, 720).to_image();
-
-    // Save the cropped image into a buffer
-    // let mut buf = Cursor::new(Vec::new());
-
     cropped_image
-
-    // cropped_image
-    //     .write_to(&mut buf, image::ImageOutputFormat::Png)
-    //     .expect("Unable to write cropped image to buffer");
-
-    // buf.set_position(0);
-    // buf.get_ref().to_vec()
 }
 
 pub async fn handle_youtube_music_thumb(request: Path<YTMRequest>) -> impl IntoResponse {
@@ -190,6 +179,11 @@ pub async fn handle_youtube_music_thumb(request: Path<YTMRequest>) -> impl IntoR
                 format!("inline; filename=\"{}.thumb.png\"", request.id)
                     .parse()
                     .unwrap(),
+            );
+            // Add cache control similar to what Youtube does.
+            headers.insert(
+                header::CACHE_CONTROL,
+                "public, max-age=7200".parse().unwrap(),
             );
             (StatusCode::OK, headers, data)
         }

@@ -207,6 +207,11 @@ pub async fn handle_og_image_request(og_request: Query<OGImageRequest>) -> impl 
                         .parse()
                         .unwrap(),
                 );
+                // Add cache-control for 10 minutes
+                headers.insert(
+                    header::CACHE_CONTROL,
+                    "public, max-age=600".parse().unwrap(),
+                );
                 (StatusCode::OK, headers, data)
             }
         }
