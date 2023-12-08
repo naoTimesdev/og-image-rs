@@ -4,7 +4,7 @@ A web server that host/generate an open graph image for naoTimes.
 
 Created originally in JavaScript with express.js, now use Rust + Axum 🚀
 
-**Public**: https://og-api.naoti.me (TODO)
+**Public**: https://og-api.naoti.me
 
 ## MSRV
 The following package is developed with Rust 1.72 with support for minimum version of 1.66 following [axum's](https://github.com/tokio-rs/axum) MSRV
