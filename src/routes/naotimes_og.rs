@@ -1,14 +1,16 @@
 /// OG Image Generator for naoTimes
 use axum::{
-    extract::Query,
+    extract::{Query, State},
     http::{header, HeaderMap, StatusCode},
     response::IntoResponse,
 };
 use lazy_static::lazy_static;
 use og_image_writer::{style, writer::OGImageWriter, TextArea};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tokio::task;
 use tracing::info;
+
+use crate::{report_plausible_event, AppState, PlausibleEvent, PlausibleMetadata};
 
 lazy_static! {
     static ref IMAGE_BASE: Vec<u8> = include_bytes!("../../assets/ntui_base.png").to_vec();
@@ -18,7 +20,7 @@ lazy_static! {
         Vec::from(include_bytes!("../../assets/Roboto-Light.ttf") as &[u8]);
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct OGImageRequest {
     name: String,
     count: Option<usize>,
@@ -167,16 +169,24 @@ fn create_og_image(
     Ok(writer.encode(og_image_writer::ImageOutputFormat::Png)?)
 }
 
-pub async fn handle_og_image_request(og_request: Query<OGImageRequest>) -> impl IntoResponse {
+pub async fn handle_og_image_request(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    og_request: Query<OGImageRequest>,
+) -> impl IntoResponse {
     let name = og_request.name.clone();
     let count = og_request.count.clone();
     let total = og_request.total.clone();
 
+    let formatted = serde_qs::to_string(&og_request.0).unwrap_or_default();
+
+    let uuid = uuid::Uuid::new_v4().to_string();
+
     let res = task::spawn_blocking(move || {
-        let uuid = uuid::Uuid::new_v4().to_string();
         info!(
             "Generating OG Image for {} with data: {:?}",
-            uuid, og_request
+            uuid.clone(),
+            og_request
         );
         let data = create_og_image(uuid.clone(), name, count, total);
 
@@ -184,7 +194,7 @@ pub async fn handle_og_image_request(og_request: Query<OGImageRequest>) -> impl 
             Ok(data) => (data, uuid.clone()),
             Err(err) => {
                 tracing::error!("Error creating OG Image: {}", err);
-                (Vec::new(), uuid)
+                (Vec::new(), uuid.clone())
             }
         }
     })
@@ -192,33 +202,60 @@ pub async fn handle_og_image_request(og_request: Query<OGImageRequest>) -> impl 
 
     let errors_text = "Error creating OG Image".as_bytes().to_vec();
 
-    let mut headers = HeaderMap::new();
+    // format og_request to query string
+
+    // get user agent
+    let user_agent = headers
+        .get(header::USER_AGENT)
+        .map(|v| v.to_str().unwrap_or_default().to_string())
+        .unwrap_or_default();
+    let ip_address = headers
+        .get("x-forwarded-for")
+        .map(|v| v.to_str().unwrap_or_default().to_string())
+        .unwrap_or_default();
+
+    let mut resp_headers = HeaderMap::new();
 
     match res {
         Ok((data, uuid)) => {
+            let mut event = PlausibleEvent::default();
+            event.url = format!("/large?{}", formatted);
+            event.props = Some(serde_json::json!({
+                "uuid": uuid.clone(),
+            }));
+            report_plausible_event(
+                state,
+                event,
+                PlausibleMetadata {
+                    user_agent,
+                    ip_address,
+                },
+            )
+            .await;
+
             if data.is_empty() {
-                headers.insert(header::CONTENT_TYPE, "text/plain".parse().unwrap());
-                (StatusCode::INTERNAL_SERVER_ERROR, headers, errors_text)
+                resp_headers.insert(header::CONTENT_TYPE, "text/plain".parse().unwrap());
+                (StatusCode::INTERNAL_SERVER_ERROR, resp_headers, errors_text)
             } else {
-                headers.insert(header::CONTENT_TYPE, "image/png".parse().unwrap());
-                headers.insert(
+                resp_headers.insert(header::CONTENT_TYPE, "image/png".parse().unwrap());
+                resp_headers.insert(
                     header::CONTENT_DISPOSITION,
                     format!("inline; filename=\"{}.OGImage.png\"", uuid)
                         .parse()
                         .unwrap(),
                 );
                 // Add cache-control for 10 minutes
-                headers.insert(
+                resp_headers.insert(
                     header::CACHE_CONTROL,
                     "public, max-age=600".parse().unwrap(),
                 );
-                (StatusCode::OK, headers, data)
+                (StatusCode::OK, resp_headers, data)
             }
         }
         Err(err) => {
             tracing::error!("Error creating OG Image: {}", err);
-            headers.insert(header::CONTENT_TYPE, "text/plain".parse().unwrap());
-            (StatusCode::INTERNAL_SERVER_ERROR, headers, errors_text)
+            resp_headers.insert(header::CONTENT_TYPE, "text/plain".parse().unwrap());
+            (StatusCode::INTERNAL_SERVER_ERROR, resp_headers, errors_text)
         }
     }
 }

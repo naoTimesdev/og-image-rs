@@ -2,7 +2,7 @@ use std::io::Cursor;
 
 /// Music Thumbnail fetcher for the music player in naoTimes
 use axum::{
-    extract::{Path, Query},
+    extract::{Path, Query, State},
     http::{header, HeaderMap, StatusCode},
     response::{IntoResponse, Redirect, Response},
 };
@@ -11,7 +11,9 @@ use lazy_static::lazy_static;
 use scraper::Selector;
 use serde::Deserialize;
 use tracing::info;
-use urlencoding::decode;
+use urlencoding::{decode, encode};
+
+use crate::{report_plausible_event, AppState, PlausibleEvent, PlausibleMetadata};
 
 lazy_static! {
     static ref USER_AGENT: &'static str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.115 Safari/537.36";
@@ -40,7 +42,11 @@ fn reqwest_client() -> reqwest::Client {
         .unwrap()
 }
 
-pub async fn handle_bandcamp_thumb(query: Query<BandcampRequest>) -> Response {
+pub async fn handle_bandcamp_thumb(
+    query: Query<BandcampRequest>,
+    State(state): State<AppState>,
+    og_headers: HeaderMap,
+) -> Response {
     let decode_url = decode(&query.url)
         .expect("Failed to decode URL")
         .to_string();
@@ -52,6 +58,14 @@ pub async fn handle_bandcamp_thumb(query: Query<BandcampRequest>) -> Response {
         .send()
         .await
         .unwrap();
+
+    let metadata: PlausibleMetadata = og_headers.into();
+    let mut event = PlausibleEvent::default();
+    event.url = format!("/music/bandcamp?url={}", encode(&decode_url));
+    event.props = Some(serde_json::json!({
+        "success": req.status().is_success().to_string(),
+    }));
+    report_plausible_event(state, event, metadata).await;
 
     if !req.status().is_success() {
         if req.status() == reqwest::StatusCode::NOT_FOUND {
@@ -78,7 +92,11 @@ pub async fn handle_bandcamp_thumb(query: Query<BandcampRequest>) -> Response {
     }
 }
 
-pub async fn handle_soundcloud_thumb(request: Path<SoundcloudRequest>) -> Response {
+pub async fn handle_soundcloud_thumb(
+    request: Path<SoundcloudRequest>,
+    State(state): State<AppState>,
+    og_headers: HeaderMap,
+) -> Response {
     info!("Processing soundcloud URL: {:?}", request);
 
     let req = reqwest_client()
@@ -89,6 +107,14 @@ pub async fn handle_soundcloud_thumb(request: Path<SoundcloudRequest>) -> Respon
         .send()
         .await
         .unwrap();
+
+    let metadata: PlausibleMetadata = og_headers.into();
+    let mut event = PlausibleEvent::default();
+    event.url = format!("/music/soundcloud/{}/{}", request.artist, request.title);
+    event.props = Some(serde_json::json!({
+        "success": req.status().is_success().to_string(),
+    }));
+    report_plausible_event(state, event, metadata).await;
 
     if !req.status().is_success() {
         if req.status() == reqwest::StatusCode::NOT_FOUND {
@@ -133,7 +159,11 @@ fn create_ytm_thumb_square(bytes_data: Vec<u8>) -> ImageBuffer<image::Rgba<u8>, 
     cropped_image
 }
 
-pub async fn handle_youtube_music_thumb(request: Path<YTMRequest>) -> impl IntoResponse {
+pub async fn handle_youtube_music_thumb(
+    request: Path<YTMRequest>,
+    State(state): State<AppState>,
+    og_headers: HeaderMap,
+) -> impl IntoResponse {
     info!("Processing YouTube Music URL: {:?}", request);
 
     let req = reqwest_client()
@@ -144,6 +174,14 @@ pub async fn handle_youtube_music_thumb(request: Path<YTMRequest>) -> impl IntoR
         .send()
         .await
         .unwrap();
+
+    let metadata: PlausibleMetadata = og_headers.into();
+    let mut event = PlausibleEvent::default();
+    event.url = format!("/music/ytm/{}", request.id);
+    event.props = Some(serde_json::json!({
+        "success": req.status().is_success().to_string(),
+    }));
+    report_plausible_event(state, event, metadata).await;
 
     let mut headers = HeaderMap::new();
 
