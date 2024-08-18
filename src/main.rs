@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{net::IpAddr, str::FromStr, sync::Arc};
 
 use crate::env::get_env;
 use axum::{
@@ -36,7 +36,7 @@ pub struct PlausibleEvent {
 
 pub struct PlausibleMetadata {
     pub user_agent: String,
-    pub ip_address: String,
+    pub ip_address: Option<IpAddr>,
 }
 
 impl Default for PlausibleEvent {
@@ -73,12 +73,18 @@ pub async fn report_plausible_event(
             .build()
             .unwrap();
         let mut headers = HeaderMap::new();
-        headers.insert("X-Forwarded-For", metadata.ip_address.parse().unwrap());
+
+        let real_ip = metadata
+            .ip_address
+            .clone()
+            .unwrap_or(IpAddr::from_str("127.0.0.1").unwrap());
+
+        headers.insert("X-Forwarded-For", real_ip.to_string().parse().unwrap());
         headers.insert("Content-Type", "application/json".parse().unwrap());
 
         let body = serde_json::to_string(&event).unwrap();
 
-        debug!("Sending plausible event: {}", body);
+        debug!("Sending plausible event: {} // {:?}", body, headers);
         // post
         let _ = client
             .post(format!("{}/api/event", plausible_endpoint))

@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use tokio::task;
 use tracing::info;
 
-use crate::{report_plausible_event, AppState, PlausibleEvent, PlausibleMetadata};
+use crate::{report_plausible_event, AppState, PlausibleEvent};
 
 lazy_static! {
     static ref IMAGE_BASE: Vec<u8> = include_bytes!("../../assets/ntui_base.png").to_vec();
@@ -205,14 +205,6 @@ pub async fn handle_og_image_request(
     // format og_request to query string
 
     // get user agent
-    let user_agent = headers
-        .get(header::USER_AGENT)
-        .map(|v| v.to_str().unwrap_or_default().to_string())
-        .unwrap_or_default();
-    let ip_address = headers
-        .get("x-forwarded-for")
-        .map(|v| v.to_str().unwrap_or_default().to_string())
-        .unwrap_or_default();
 
     let mut resp_headers = HeaderMap::new();
 
@@ -223,15 +215,8 @@ pub async fn handle_og_image_request(
             event.props = Some(serde_json::json!({
                 "uuid": uuid.clone(),
             }));
-            report_plausible_event(
-                state,
-                event,
-                PlausibleMetadata {
-                    user_agent,
-                    ip_address,
-                },
-            )
-            .await;
+            let ev_metadata = headers.into();
+            report_plausible_event(state, event, ev_metadata).await;
 
             if data.is_empty() {
                 resp_headers.insert(header::CONTENT_TYPE, "text/plain".parse().unwrap());

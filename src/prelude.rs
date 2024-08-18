@@ -1,3 +1,5 @@
+use std::net::IpAddr;
+
 use axum::{
     http::{header, HeaderMap, StatusCode},
     response::IntoResponse,
@@ -33,10 +35,24 @@ impl Into<PlausibleMetadata> for HeaderMap {
             .get(header::USER_AGENT)
             .map(|v| v.to_str().unwrap_or_default().to_string())
             .unwrap_or_default();
-        let ip_address = self
-            .get("x-forwarded-for")
-            .map(|v| v.to_str().unwrap_or_default().to_string())
-            .unwrap_or_default();
+
+        // Get rightmost IP address from X-Forwarded-For header
+        let ip_addresses: Vec<IpAddr> = self
+            .get_all("X-Forwarded-For")
+            .iter()
+            .filter_map(|v| {
+                // parse into IpAddr
+                match v.to_str() {
+                    Ok(v) => match v.parse() {
+                        Ok(v) => Some(v),
+                        Err(_) => None,
+                    },
+                    Err(_) => None,
+                }
+            })
+            .collect();
+
+        let ip_address = ip_addresses.last().cloned();
 
         PlausibleMetadata {
             user_agent,
