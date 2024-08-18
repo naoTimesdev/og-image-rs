@@ -33,6 +33,7 @@ pub struct PlausibleEvent {
     domain: Option<String>,
 }
 
+#[derive(Debug)]
 pub struct PlausibleMetadata {
     pub user_agent: String,
     pub ip_address: Vec<IpAddr>,
@@ -82,6 +83,7 @@ pub async fn report_plausible_event(
     let mut lock = state.join_handle.lock().await;
     *lock = Some(tokio::spawn(async move {
         debug!("Reporting plausible event: {:?}", event);
+        debug!("Metadata: {:?}", &metadata);
         event.domain = Some(plausible_domain);
 
         let client = reqwest::ClientBuilder::new()
