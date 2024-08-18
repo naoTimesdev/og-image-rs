@@ -68,3 +68,29 @@ fn parse_specific_headers(headers: &GetAll<HeaderValue>) -> Vec<IpAddr> {
         })
         .collect()
 }
+
+pub fn is_private_ip(ip: IpAddr) -> bool {
+    match ip {
+        IpAddr::V4(ipv4) => {
+            if ipv4.is_private()
+                || ipv4.is_loopback()
+                || ipv4.is_link_local()
+                || ipv4.is_unspecified()
+                || ipv4.is_broadcast()
+                || ipv4.is_documentation()
+                || ipv4.is_multicast()
+            {
+                true
+            } else {
+                false
+            }
+        }
+        IpAddr::V6(ipv6) => {
+            if ipv6.is_loopback() || ipv6.is_multicast() || ipv6.is_unspecified() {
+                true
+            } else {
+                false
+            }
+        }
+    }
+}

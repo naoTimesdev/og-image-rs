@@ -7,6 +7,7 @@ use axum::{
     routing::get,
     Router,
 };
+use prelude::is_private_ip;
 use reqwest::header::HeaderMap;
 use tokio::{net::TcpListener, sync::Mutex, task::JoinHandle};
 use tower_http::{
@@ -95,11 +96,11 @@ pub async fn report_plausible_event(
         let real_ip: Vec<String> = metadata
             .ip_address
             .iter()
-            .filter_map(|&x| {
-                if x.is_loopback() {
+            .filter_map(|&ip| {
+                if is_private_ip(ip) {
                     None
                 } else {
-                    Some(x.to_string())
+                    Some(ip.to_string())
                 }
             })
             .collect();
