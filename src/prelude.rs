@@ -1,10 +1,10 @@
 use std::net::IpAddr;
 
 use axum::{
-    http::{header, HeaderMap, StatusCode},
-    response::IntoResponse,
-    response::Response,
+    http::{header, HeaderMap, HeaderValue, StatusCode},
+    response::{IntoResponse, Response},
 };
+use reqwest::header::GetAll;
 
 use crate::PlausibleMetadata;
 
@@ -37,24 +37,34 @@ impl From<HeaderMap> for PlausibleMetadata {
             .unwrap_or_default();
 
         // Get rightmost IP address from X-Forwarded-For header
-        let ip_address: Vec<IpAddr> = val
-            .get_all("X-Forwarded-For")
-            .iter()
-            .filter_map(|v| {
-                // parse into IpAddr
-                match v.to_str() {
-                    Ok(v) => match v.parse() {
-                        Ok(v) => Some(v),
-                        Err(_) => None,
-                    },
-                    Err(_) => None,
-                }
-            })
-            .collect();
+        let x_forwarded_for: Vec<IpAddr> = parse_specific_headers(&val.get_all("x-forwarded-for"));
+        let forwarded: Vec<IpAddr> = parse_specific_headers(&val.get_all(header::FORWARDED));
+        let x_real_ip: Vec<IpAddr> = parse_specific_headers(&val.get_all("x-real-ip"));
+
+        let mut ip_address: Vec<IpAddr> = vec![];
+        ip_address.extend(x_forwarded_for);
+        ip_address.extend(forwarded);
+        ip_address.extend(x_real_ip);
 
         PlausibleMetadata {
             user_agent,
             ip_address,
         }
     }
+}
+
+fn parse_specific_headers(headers: &GetAll<HeaderValue>) -> Vec<IpAddr> {
+    headers
+        .iter()
+        .filter_map(|v| {
+            // parse into IpAddr
+            match v.to_str() {
+                Ok(v) => match v.parse() {
+                    Ok(v) => Some(v),
+                    Err(_) => None,
+                },
+                Err(_) => None,
+            }
+        })
+        .collect()
 }
