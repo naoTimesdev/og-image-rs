@@ -7,7 +7,6 @@ use axum::{
     response::{IntoResponse, Redirect, Response},
 };
 use image::ImageBuffer;
-use lazy_static::lazy_static;
 use scraper::Selector;
 use serde::Deserialize;
 use tracing::info;
@@ -15,9 +14,7 @@ use urlencoding::{decode, encode};
 
 use crate::{report_plausible_event, AppState, PlausibleEvent, PlausibleMetadata};
 
-lazy_static! {
-    static ref USER_AGENT: &'static str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.115 Safari/537.36";
-}
+static USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.115 Safari/537.36";
 
 #[derive(Deserialize, Debug)]
 pub struct BandcampRequest {
@@ -209,7 +206,7 @@ pub async fn handle_youtube_music_thumb(
     let cropped_image = create_ytm_thumb_square(image_data);
 
     let mut buf = Cursor::new(Vec::new());
-    match cropped_image.write_to(&mut buf, image::ImageOutputFormat::Png) {
+    match cropped_image.write_to(&mut buf, image::ImageFormat::Png) {
         Ok(_) => {
             buf.set_position(0);
             let data = buf.get_ref().to_vec();

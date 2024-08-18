@@ -1,30 +1,29 @@
+use std::sync::LazyLock;
+
 use axum::{
     extract::Query,
     http::{header, HeaderMap, StatusCode},
     response::IntoResponse,
 };
 use chrono::prelude::*;
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use tera::{Context, Tera};
 use urlencoding::decode;
 
 use crate::generator::random_status::select_random_status;
 
-lazy_static! {
-    pub static ref TEMPLATES: Tera = {
-        let mut tera = match Tera::new("templates/**/*.html") {
-            Ok(t) => t,
-            Err(e) => {
-                println!("Parsing error(s): {}", e);
-                std::process::exit(1);
-            }
-        };
-        tera.autoescape_on(vec![".html"]);
-
-        tera
+static TEMPLATES: LazyLock<Tera> = LazyLock::new(|| {
+    let mut tera = match Tera::new("templates/**/*.html") {
+        Ok(t) => t,
+        Err(e) => {
+            println!("Parsing error(s): {}", e);
+            std::process::exit(1);
+        }
     };
-}
+    tera.autoescape_on(vec![".html"]);
+
+    tera
+});
 
 #[derive(Debug)]
 struct UnixTimestamp(u64);
@@ -188,9 +187,7 @@ impl std::fmt::Display for UnixTimestamp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let i64 = self.0 as i64;
 
-        let naive = NaiveDateTime::from_timestamp_opt(i64, 0).unwrap();
-        // convert to UTC
-        let utc_dt = DateTime::<Utc>::from_naive_utc_and_offset(naive, Utc);
+        let utc_dt = DateTime::from_timestamp(i64, 0).unwrap();
         // convert to UTC+7
         let local_dt = utc_dt.with_timezone(&FixedOffset::east_opt(7 * 3600).unwrap());
 

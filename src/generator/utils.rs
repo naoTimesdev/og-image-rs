@@ -1,5 +1,6 @@
 use crate::env::get_env;
 
+#[allow(dead_code)]
 pub fn get_generator_host() -> String {
     let hostname = get_env("SERVER_HOSTNAME").unwrap_or_else(|_| {
         tracing::warn!("SERVER_HOSTNAME is not set. Using HOST:PORT instead.");

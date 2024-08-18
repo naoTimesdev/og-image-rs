@@ -4,7 +4,6 @@ use axum::{
     http::{header, HeaderMap, StatusCode},
     response::IntoResponse,
 };
-use lazy_static::lazy_static;
 use og_image_writer::{style, writer::OGImageWriter, TextArea};
 use serde::{Deserialize, Serialize};
 use tokio::task;
@@ -12,13 +11,9 @@ use tracing::info;
 
 use crate::{report_plausible_event, AppState, PlausibleEvent};
 
-lazy_static! {
-    static ref IMAGE_BASE: Vec<u8> = include_bytes!("../../assets/ntui_base.png").to_vec();
-    static ref ROBOTO_BOLD: Vec<u8> =
-        Vec::from(include_bytes!("../../assets/Roboto-Bold.ttf") as &[u8]);
-    static ref ROBOTO_LIGHT: Vec<u8> =
-        Vec::from(include_bytes!("../../assets/Roboto-Light.ttf") as &[u8]);
-}
+static IMAGE_BASE: &[u8] = include_bytes!("../../assets/ntui_base.png");
+static ROBOTO_BOLD: &[u8] = include_bytes!("../../assets/Roboto-Bold.ttf");
+static ROBOTO_LIGHT: &[u8] = include_bytes!("../../assets/Roboto-Light.ttf");
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct OGImageRequest {
@@ -42,7 +37,7 @@ fn create_og_image(
             flex_direction: style::FlexDirection::Column,
             ..style::WindowStyle::default()
         },
-        &IMAGE_BASE,
+        IMAGE_BASE,
         og_image_writer::img::ImageInputFormat::Png,
     )?;
 
@@ -64,7 +59,7 @@ fn create_og_image(
             max_width: Some(1160),
             ..style::Style::default()
         },
-        Some(ROBOTO_BOLD.clone()),
+        Some(ROBOTO_BOLD.to_vec()),
     )?;
 
     if let Some(count) = count {
@@ -82,7 +77,7 @@ fn create_og_image(
                     color: style::Rgba([255, 255, 255, 255]),
                     ..style::Style::default()
                 },
-                Some(ROBOTO_BOLD.clone()),
+                Some(ROBOTO_BOLD.to_vec()),
             )?;
         }
         writer.set_textarea(
@@ -97,7 +92,7 @@ fn create_og_image(
                 line_height: 2.5,
                 ..style::Style::default()
             },
-            Some(ROBOTO_LIGHT.clone()),
+            Some(ROBOTO_LIGHT.to_vec()),
         )?;
     }
 
@@ -116,7 +111,7 @@ fn create_og_image(
                     color: style::Rgba([255, 255, 255, 255]),
                     ..style::Style::default()
                 },
-                Some(ROBOTO_BOLD.clone()),
+                Some(ROBOTO_BOLD.to_vec()),
             )?;
         }
         let margin_t2 = if count.is_some() { 12 } else { 30 };
@@ -132,7 +127,7 @@ fn create_og_image(
                 line_height: 2.5,
                 ..style::Style::default()
             },
-            Some(ROBOTO_LIGHT.clone()),
+            Some(ROBOTO_LIGHT.to_vec()),
         )?;
     }
 
@@ -146,7 +141,7 @@ fn create_og_image(
             font_size: 20.,
             ..style::Style::default()
         },
-        Some(ROBOTO_BOLD.clone()),
+        Some(ROBOTO_BOLD.to_vec()),
     )?;
     writer.set_textarea(
         footer,
@@ -161,7 +156,7 @@ fn create_og_image(
             word_break: style::WordBreak::Normal,
             ..style::Style::default()
         },
-        Some(ROBOTO_LIGHT.clone()),
+        Some(ROBOTO_LIGHT.to_vec()),
     )?;
 
     info!("Painting: {}", uuid);
@@ -201,13 +196,7 @@ pub async fn handle_og_image_request(
     .await;
 
     let errors_text = "Error creating OG Image".as_bytes().to_vec();
-
-    // format og_request to query string
-
-    // get user agent
-
     let mut resp_headers = HeaderMap::new();
-
     match res {
         Ok((data, uuid)) => {
             let ev_metadata: crate::PlausibleMetadata = headers.into();

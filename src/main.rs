@@ -147,10 +147,6 @@ async fn main() {
             "/_/template/user_card",
             get(routes::template::handle_template_user_card),
         )
-        .route(
-            "/generator/user",
-            get(routes::generator::handle_generator_user_card),
-        )
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::new().allow_origin(Any))
         .with_state(state);

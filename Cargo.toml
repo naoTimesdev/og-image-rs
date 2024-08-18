@@ -2,30 +2,28 @@
 name = "naotimes_open_graph"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.66"
+rust-version = "1.80.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-axum = { version = "0.7.2", features = ["tracing", "query"] }
+axum = { version = "0.7.5", features = ["tracing", "query"] }
 og_image_writer = "0.11.0"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0.108"
-serde_qs = "0.12"
-tokio = { version = "1.34", features = ["full"] }
-tower-http = { version = "0.5", features = ["cors", "trace"] }
+serde = { version = "1.0.208", features = ["derive"] }
+serde_json = "1.0.125"
+serde_qs = "0.13.0"
+tokio = { version = "1.39.3", features = ["full"] }
+tower-http = { version = "0.5.2", features = ["cors", "trace"] }
 tracing = "0.1.40"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-scraper = "0.18"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+scraper = "0.20.0"
 anyhow = "1"
 uuid = { version = "1", features = ["v4", "fast-rng"] }
-lazy_static = "1"
-reqwest = { version = "0.11"}
-urlencoding = { version = "2" }
-image = "0.24"
-imageproc = "0.23"
-dotenv = "0.15"
-tera = "1"
-chrono = "0.4.31"
+reqwest = "0.12.5"
+urlencoding = "2"
+image = "0.25.2"
+imageproc = "0.25.0"
+dotenvy = "0.15.7"
+tera = "1.20.0"
+chrono = "0.4.38"
 rand = "0.8.5"
-headless_chrome = {git = "https://github.com/atroche/rust-headless-chrome", features = ["fetch"]}
