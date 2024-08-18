@@ -1,4 +1,4 @@
-use std::{net::IpAddr, str::FromStr, sync::Arc};
+use std::{net::IpAddr, sync::Arc};
 
 use crate::env::get_env;
 use axum::{
@@ -35,7 +35,7 @@ pub struct PlausibleEvent {
 
 pub struct PlausibleMetadata {
     pub user_agent: String,
-    pub ip_address: Option<IpAddr>,
+    pub ip_address: Vec<IpAddr>,
 }
 
 impl PlausibleEvent {
@@ -90,11 +90,21 @@ pub async fn report_plausible_event(
             .unwrap();
         let mut headers = HeaderMap::new();
 
-        let real_ip = metadata
+        let real_ip: Vec<String> = metadata
             .ip_address
-            .unwrap_or(IpAddr::from_str("127.0.0.1").unwrap());
+            .iter()
+            .filter_map(|&x| {
+                if x.is_loopback() {
+                    None
+                } else {
+                    Some(x.to_string())
+                }
+            })
+            .collect();
 
-        headers.insert("X-Forwarded-For", real_ip.to_string().parse().unwrap());
+        let merged_real_ip = real_ip.join(", ");
+
+        headers.insert("X-Forwarded-For", merged_real_ip.parse().unwrap());
         headers.insert("Content-Type", "application/json".parse().unwrap());
 
         let body = serde_json::to_string(&event).unwrap();

@@ -37,7 +37,7 @@ impl From<HeaderMap> for PlausibleMetadata {
             .unwrap_or_default();
 
         // Get rightmost IP address from X-Forwarded-For header
-        let ip_addresses: Vec<IpAddr> = val
+        let ip_address: Vec<IpAddr> = val
             .get_all("X-Forwarded-For")
             .iter()
             .filter_map(|v| {
@@ -51,8 +51,6 @@ impl From<HeaderMap> for PlausibleMetadata {
                 }
             })
             .collect();
-
-        let ip_address = ip_addresses.last().cloned();
 
         PlausibleMetadata {
             user_agent,
