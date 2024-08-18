@@ -17,7 +17,6 @@ use tracing::debug;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod env;
-mod generator;
 mod prelude;
 mod routes;
 
@@ -142,10 +141,6 @@ async fn main() {
         .route(
             "/music/ytm/:id",
             get(routes::music_thumb::handle_youtube_music_thumb),
-        )
-        .route(
-            "/_/template/user_card",
-            get(routes::template::handle_template_user_card),
         )
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::new().allow_origin(Any))
