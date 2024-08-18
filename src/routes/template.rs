@@ -126,7 +126,7 @@ impl UserCardRequest {
         }
 
         if let Some(img_url) = &self.img_url {
-            json_extra.img_url = Some(decode(&img_url).unwrap().to_string())
+            json_extra.img_url = Some(decode(img_url).unwrap().to_string())
         }
 
         if let Some(status) = &self.status {
@@ -184,8 +184,8 @@ pub async fn handle_template_user_card(query: Query<UserCardRequest>) -> impl In
 }
 
 // implement UnixTimestamp parse to string
-impl ToString for UnixTimestamp {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for UnixTimestamp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let i64 = self.0 as i64;
 
         let naive = NaiveDateTime::from_timestamp_opt(i64, 0).unwrap();
@@ -194,6 +194,6 @@ impl ToString for UnixTimestamp {
         // convert to UTC+7
         let local_dt = utc_dt.with_timezone(&FixedOffset::east_opt(7 * 3600).unwrap());
 
-        local_dt.format("%Y-%m-%d %H:%M:%S WIB").to_string()
+        write!(f, "{}", local_dt.format("%Y-%m-%d %H:%M:%S WIB"))
     }
 }

@@ -28,15 +28,32 @@ pub struct AppState {
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct PlausibleEvent {
-    pub name: String,
-    pub url: String,
-    pub props: Option<serde_json::Value>,
-    pub domain: Option<String>,
+    name: String,
+    url: String,
+    props: Option<serde_json::Value>,
+    domain: Option<String>,
 }
 
 pub struct PlausibleMetadata {
     pub user_agent: String,
     pub ip_address: Option<IpAddr>,
+}
+
+impl PlausibleEvent {
+    pub fn with_name(mut self, name: &str) -> Self {
+        self.name = name.to_string();
+        self
+    }
+
+    pub fn with_url(mut self, url: impl Into<String>) -> Self {
+        self.url = url.into();
+        self
+    }
+
+    pub fn with_props(mut self, props: serde_json::Value) -> Self {
+        self.props = Some(props);
+        self
+    }
 }
 
 impl Default for PlausibleEvent {
@@ -76,7 +93,6 @@ pub async fn report_plausible_event(
 
         let real_ip = metadata
             .ip_address
-            .clone()
             .unwrap_or(IpAddr::from_str("127.0.0.1").unwrap());
 
         headers.insert("X-Forwarded-For", real_ip.to_string().parse().unwrap());

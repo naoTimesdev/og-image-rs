@@ -69,8 +69,8 @@ fn create_og_image(
 
     if let Some(count) = count {
         let text_data = match count {
-            0 => format!("\nTidak ada utang"),
-            _ => format!("\nSisa utang: "),
+            0 => "\nTidak ada utang".to_string(),
+            _ => "\nSisa utang: ".to_string(),
         };
         let mut textarea = TextArea::new();
         textarea.push_text(&text_data);
@@ -103,8 +103,8 @@ fn create_og_image(
 
     if let Some(total) = total {
         let text_data = match total {
-            0 => format!("\nTidak ada garapan"),
-            _ => format!("\nProyek: "),
+            0 => "\nTidak ada garapan".to_string(),
+            _ => "\nProyek: ".to_string(),
         };
         let mut textarea = TextArea::new();
         textarea.push_text(&text_data);
@@ -175,8 +175,8 @@ pub async fn handle_og_image_request(
     og_request: Query<OGImageRequest>,
 ) -> impl IntoResponse {
     let name = og_request.name.clone();
-    let count = og_request.count.clone();
-    let total = og_request.total.clone();
+    let count = og_request.count;
+    let total = og_request.total;
 
     let formatted = serde_qs::to_string(&og_request.0).unwrap_or_default();
 
@@ -210,12 +210,12 @@ pub async fn handle_og_image_request(
 
     match res {
         Ok((data, uuid)) => {
-            let mut event = PlausibleEvent::default();
-            event.url = format!("/large?{}", formatted);
-            event.props = Some(serde_json::json!({
-                "uuid": uuid.clone(),
-            }));
-            let ev_metadata = headers.into();
+            let ev_metadata: crate::PlausibleMetadata = headers.into();
+            let event = PlausibleEvent::default()
+                .with_url(format!("/large?{}", formatted))
+                .with_props(serde_json::json!({
+                    "uuid": uuid.clone(),
+                }));
             report_plausible_event(state, event, ev_metadata).await;
 
             if data.is_empty() {

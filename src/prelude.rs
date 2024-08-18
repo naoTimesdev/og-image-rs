@@ -29,15 +29,15 @@ where
     }
 }
 
-impl Into<PlausibleMetadata> for HeaderMap {
-    fn into(self) -> PlausibleMetadata {
-        let user_agent = self
+impl From<HeaderMap> for PlausibleMetadata {
+    fn from(val: HeaderMap) -> Self {
+        let user_agent = val
             .get(header::USER_AGENT)
             .map(|v| v.to_str().unwrap_or_default().to_string())
             .unwrap_or_default();
 
         // Get rightmost IP address from X-Forwarded-For header
-        let ip_addresses: Vec<IpAddr> = self
+        let ip_addresses: Vec<IpAddr> = val
             .get_all("X-Forwarded-For")
             .iter()
             .filter_map(|v| {

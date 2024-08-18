@@ -60,11 +60,11 @@ pub async fn handle_bandcamp_thumb(
         .unwrap();
 
     let metadata: PlausibleMetadata = og_headers.into();
-    let mut event = PlausibleEvent::default();
-    event.url = format!("/music/bandcamp?url={}", encode(&decode_url));
-    event.props = Some(serde_json::json!({
-        "success": req.status().is_success().to_string(),
-    }));
+    let event = PlausibleEvent::default()
+        .with_url(format!("/music/bandcamp?url={}", encode(&decode_url)))
+        .with_props(serde_json::json!({
+            "success": req.status().is_success().to_string(),
+        }));
     report_plausible_event(state, event, metadata).await;
 
     if !req.status().is_success() {
@@ -109,11 +109,14 @@ pub async fn handle_soundcloud_thumb(
         .unwrap();
 
     let metadata: PlausibleMetadata = og_headers.into();
-    let mut event = PlausibleEvent::default();
-    event.url = format!("/music/soundcloud/{}/{}", request.artist, request.title);
-    event.props = Some(serde_json::json!({
-        "success": req.status().is_success().to_string(),
-    }));
+    let event = PlausibleEvent::default()
+        .with_url(format!(
+            "/music/soundcloud/{}/{}",
+            request.artist, request.title
+        ))
+        .with_props(serde_json::json!({
+            "success": req.status().is_success().to_string(),
+        }));
     report_plausible_event(state, event, metadata).await;
 
     if !req.status().is_success() {
@@ -176,11 +179,11 @@ pub async fn handle_youtube_music_thumb(
         .unwrap();
 
     let metadata: PlausibleMetadata = og_headers.into();
-    let mut event = PlausibleEvent::default();
-    event.url = format!("/music/ytm/{}", request.id);
-    event.props = Some(serde_json::json!({
-        "success": req.status().is_success().to_string(),
-    }));
+    let event = PlausibleEvent::default()
+        .with_url(format!("/music/ytm/{}", request.id))
+        .with_props(serde_json::json!({
+            "success": req.status().is_success().to_string(),
+        }));
     report_plausible_event(state, event, metadata).await;
 
     let mut headers = HeaderMap::new();

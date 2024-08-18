@@ -80,11 +80,11 @@ lazy_static! {
     ];
 }
 
-fn select_random_from_vec(vec: &Vec<String>) -> String {
+fn select_random_from_vec(vec: &[String]) -> String {
     let mut rng = rand::thread_rng();
     let index = rng.gen_range(0..vec.len());
-    let result = vec[index].clone();
-    result
+
+    vec[index].clone()
 }
 
 pub fn select_random_status(status: String) -> Option<String> {
