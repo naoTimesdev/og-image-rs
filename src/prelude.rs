@@ -40,8 +40,14 @@ impl From<HeaderMap> for PlausibleMetadata {
         let x_forwarded_for: Vec<IpAddr> = parse_specific_headers(&val.get_all("x-forwarded-for"));
         let forwarded: Vec<IpAddr> = parse_specific_headers(&val.get_all(header::FORWARDED));
         let x_real_ip: Vec<IpAddr> = parse_specific_headers(&val.get_all("x-real-ip"));
+        let cf_connecting_ip: Vec<IpAddr> =
+            parse_specific_headers(&val.get_all("cf-connecting-ip"));
+        let cf_connecting_ipv6: Vec<IpAddr> =
+            parse_specific_headers(&val.get_all("cf-connecting-ipv6"));
 
         let mut ip_address: Vec<IpAddr> = vec![];
+        ip_address.extend(cf_connecting_ip);
+        ip_address.extend(cf_connecting_ipv6);
         ip_address.extend(x_forwarded_for);
         ip_address.extend(forwarded);
         ip_address.extend(x_real_ip);
