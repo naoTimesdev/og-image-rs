@@ -12,8 +12,8 @@ use tracing::info;
 use crate::{report_plausible_event, AppState, PlausibleEvent};
 
 static IMAGE_BASE: &[u8] = include_bytes!("../../assets/ntui_base.png");
-static ROBOTO_BOLD: &[u8] = include_bytes!("../../assets/Roboto-Bold.ttf");
-static ROBOTO_LIGHT: &[u8] = include_bytes!("../../assets/Roboto-Light.ttf");
+static NOTO_SANS_BOLD: &[u8] = include_bytes!("../../assets/NotoSansCJK-Bold.ttc");
+static NOTO_SANS_LIGHT: &[u8] = include_bytes!("../../assets/NotoSans-Light.ttf");
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct OGImageRequest {
@@ -59,7 +59,7 @@ fn create_og_image(
             max_width: Some(1160),
             ..style::Style::default()
         },
-        Some(ROBOTO_BOLD.to_vec()),
+        Some(NOTO_SANS_BOLD.to_vec()),
     )?;
 
     if let Some(count) = count {
@@ -77,7 +77,7 @@ fn create_og_image(
                     color: style::Rgba([255, 255, 255, 255]),
                     ..style::Style::default()
                 },
-                Some(ROBOTO_BOLD.to_vec()),
+                Some(NOTO_SANS_BOLD.to_vec()),
             )?;
         }
         writer.set_textarea(
@@ -92,7 +92,7 @@ fn create_og_image(
                 line_height: 2.5,
                 ..style::Style::default()
             },
-            Some(ROBOTO_LIGHT.to_vec()),
+            Some(NOTO_SANS_LIGHT.to_vec()),
         )?;
     }
 
@@ -111,7 +111,7 @@ fn create_og_image(
                     color: style::Rgba([255, 255, 255, 255]),
                     ..style::Style::default()
                 },
-                Some(ROBOTO_BOLD.to_vec()),
+                Some(NOTO_SANS_BOLD.to_vec()),
             )?;
         }
         let margin_t2 = if count.is_some() { 12 } else { 30 };
@@ -127,27 +127,26 @@ fn create_og_image(
                 line_height: 2.5,
                 ..style::Style::default()
             },
-            Some(ROBOTO_LIGHT.to_vec()),
+            Some(NOTO_SANS_LIGHT.to_vec()),
         )?;
     }
 
     // Footer
     let mut footer = TextArea::new();
-    footer.push_text("Diprakasai dengan ");
     footer.push(
         "naoTimes",
         style::Style {
             color: style::Rgba([255, 255, 255, 255]),
-            font_size: 20.,
+            font_size: 28.,
             ..style::Style::default()
         },
-        Some(ROBOTO_BOLD.to_vec()),
+        Some(NOTO_SANS_BOLD.to_vec()),
     )?;
     writer.set_textarea(
         footer,
         style::Style {
             margin: style::Margin(30, 30, 30, 30),
-            font_size: 20.,
+            font_size: 28.,
             color: style::Rgba([255, 255, 255, 128]),
             text_align: style::TextAlign::End,
             right: Some(0),
@@ -156,7 +155,7 @@ fn create_og_image(
             word_break: style::WordBreak::Normal,
             ..style::Style::default()
         },
-        Some(ROBOTO_LIGHT.to_vec()),
+        Some(NOTO_SANS_LIGHT.to_vec()),
     )?;
 
     info!("Painting: {}", uuid);
